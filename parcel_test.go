@@ -36,7 +36,7 @@ func TestAddGetDelete(t *testing.T) {
 
 	parcel.Number, err = store.Add(parcel)
 	require.NoError(t, err)
-	require.NotEmpty(t, parcel.Number)
+	require.Positive(t, parcel.Number)
 
 	stored, err := store.Get(parcel.Number)
 	require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestSetAddress(t *testing.T) {
 
 	parcel.Number, err = store.Add(parcel)
 	require.NoError(t, err)
-	require.NotEmpty(t, parcel.Number)
+	require.Positive(t, parcel.Number)
 
 	newAddress := "new test address"
 	err = store.SetAddress(parcel.Number, newAddress)
@@ -84,7 +84,7 @@ func TestSetStatus(t *testing.T) {
 
 	parcel.Number, err = store.Add(parcel)
 	require.NoError(t, err)
-	require.NotEmpty(t, parcel.Number)
+	require.Positive(t, parcel.Number)
 
 	newStatus := ParcelStatusSent
 	err = store.SetStatus(parcel.Number, newStatus)
@@ -109,7 +109,7 @@ func TestGetByClient(t *testing.T) {
 		getTestParcel(),
 		getTestParcel(),
 	}
-	parcelMap := map[int]Parcel{}
+	var expected []Parcel
 
 	client := randRange.Intn(10_000_000)
 	parcels[0].Client = client
@@ -123,15 +123,11 @@ func TestGetByClient(t *testing.T) {
 
 		parcels[i].Number = id
 
-		parcelMap[id] = parcels[i]
+		expected = append(expected, parcels[i])
 	}
 
 	storedParcels, err := store.GetByClient(client)
 	require.NoError(t, err)
 	require.Len(t, storedParcels, len(parcels))
-
-	for _, parcel := range storedParcels {
-		require.Contains(t, parcelMap, parcel.Number)
-		assert.Equal(t, parcelMap[parcel.Number], parcel)
-	}
+	assert.ElementsMatch(t, expected, storedParcels)
 }

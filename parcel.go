@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 )
 
 type ParcelStore struct {
@@ -21,13 +20,11 @@ func (s ParcelStore) Add(p Parcel) (int, error) {
 		sql.Named("created_at", p.CreatedAt))
 
 	if err != nil {
-		fmt.Println(err)
 		return 0, err
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		fmt.Println(err)
 		return 0, err
 	}
 	return int(id), nil
@@ -39,8 +36,7 @@ func (s ParcelStore) Get(number int) (Parcel, error) {
 	p := Parcel{}
 	err := row.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
 	if err != nil {
-		fmt.Println(err)
-		return p, err
+		return Parcel{}, err
 	}
 
 	return p, nil
@@ -50,17 +46,16 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 	var res []Parcel
 	rows, err := s.db.Query("SELECT number, client, status, address, created_at FROM parcel WHERE client = :client", sql.Named("client", client))
 	if err != nil {
-		fmt.Println(err)
 		return res, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var p Parcel
 
 		err = rows.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
 		if err != nil {
-			fmt.Println(err)
-			return res, err
+			return []Parcel{}, err
 		}
 
 		res = append(res, p)
@@ -74,7 +69,6 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 		sql.Named("number", number))
 
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
@@ -88,7 +82,6 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 		sql.Named("number", number))
 
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
@@ -100,7 +93,6 @@ func (s ParcelStore) Delete(number int) error {
 		sql.Named("number", number),
 		sql.Named("status", ParcelStatusRegistered))
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
